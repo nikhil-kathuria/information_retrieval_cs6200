@@ -1,0 +1,449 @@
+GET _cluster/health
+GET _cluster/settings
+GET _cluster/state
+
+GET _cat/nodes?v
+GET _cat/shards?v
+GET _cat/health
+GET _cat/indices
+
+GET _search_shards
+
+
+
+PUT /mycrawler/_settings
+{
+  "index": {
+      "number_of_shards": 3,
+      "number_of_replicas": 2
+    }
+}
+
+
+GET /mycrawler/_search
+{
+  "size": 0,
+  "aggs" : {
+    "unique_terms" : {
+      "cardinality" : {
+        "script" : "doc['_version'] == -1"
+        }
+      }
+    }
+}
+
+
+GET /nyc_visionzero/_search?search_type=count
+{
+ "aggs" : {
+  "all_boroughs": {
+   "terms": {
+    "field": "borough"
+   }
+  }
+ }
+}
+
+GET /webcrawler/document/_search?
+{
+  "size": 0,
+  "query": {
+    "match_all": {}
+  },
+  "aggs": {
+    "Version_Stats": {
+      "stats": {
+        "script": "doc['_version']"
+      }
+    }
+  }
+}
+
+POST /mycrawler/document/_search
+{
+  "size": 0,
+  "aggs": {
+    "Count": {
+      "value_count": {
+        "field": "doc['_version'] = 1"
+      }
+    }
+  }
+}
+
+####################################################
+
+DELETE /testdocs
+
+PUT /webcrawler
+{
+  "settings": {
+    "index": {
+      "store": {
+        "type": "default"
+      },
+      "number_of_shards": 1,
+      "number_of_replicas": 0
+    },
+    "analysis": {
+      "analyzer": {
+        "my_english": { 
+          "type": "english",
+          "stopwords_path": "stopwords.txt" 
+        }
+      }
+    }
+  }
+}
+
+
+
+
+PUT /webcrawler/document/_mapping
+{
+  "document": {
+    "properties": {
+      "docno": {
+        "type": "string",
+        "store": true,
+        "index": "analyzed"
+      },
+      "head": {
+        "type": "string",
+        "store": true,
+        "index": "analyzed"
+      },
+      "text": {
+        "type": "string",
+        "store": true,
+        "index": "analyzed",
+        "term_vector": "with_positions_offsets_payloads",
+        "analyzer": "my_english"
+      },
+      "rawhtml": {
+        "type": "string",
+        "store": true,
+        "index": "no"
+      },
+      "headers": {
+        "type": "string",
+        "store": true,
+        "index": "analyzed"
+      },
+      "inlinks": {
+        "type": "string",
+        "store": true,
+        "index": "no"
+      },
+      "outlinks": {
+        "type": "string",
+        "store": true,
+        "index": "no"
+      }
+    }
+  }
+}
+
+
+
+GET _search
+{
+  "query": {
+    "match_all": {}
+  }
+}
+
+GET /webcrawler/document/_search
+
+GET /mycrawler/document/_search
+
+GET /docset/document/AP891026-0274/_termvector?pretty=true
+
+#######################################################
+
+GET /ap_89/document/AP890305-0030/_termvector
+
+GET /ap_89/document/AP891026-0274/_termvector?pretty=true
+
+
+GET /ap_89/document/_search
+
+GET /ap_89/document/_search
+{
+  "query":{
+    "match":
+    {"docno": "AP890306-0030"}
+  },
+  "facets": {
+    "text": {
+      "statistical": {
+        "script": "doc['text'].values.size()"
+      }
+    }
+  }
+}
+
+
+GET ap_89/document/_count
+
+GET ap_89/document/_search
+{
+  "query": {
+    "function_score": {
+      "query": {
+        "match": {
+          "text": "am"
+        }
+      },
+      "functions": [
+        {
+          "script_score": {
+            "script_id": "getTP",
+            "lang" : "groovy",
+            "params": {
+              "my_modifier": 8
+            }
+          }
+        }
+      ]
+    }
+  }
+}
+
+
+GET ap_89/document/_search
+{
+  "query": {
+    "function_score": {
+      "query": {
+        "match": {
+          "text": "student"
+        }
+      },
+      "functions": [
+        {
+          "script_score": {
+            "lang": "groovy",
+            "script_file": "tf-score",
+            "params": {
+              "term": "student",
+              "field": "text"
+            }
+          }
+        }
+      ],
+      "boost_mode": "replace"
+    }
+  }
+}
+
+
+
+POST /_scripts/groovy/getTP
+{
+     "script": "_index[field][term, _POSITIONS]"
+}
+
+GET /_scripts/groovy/getTF
+GET /ap_89/_search
+{
+  "query": {
+      "function_score": {
+        "query": {
+          "match": {
+            "text": "public"
+          }
+        },
+        "functions": [
+        {
+          "script_score": {
+            "script_id": "getTP",
+            "lang" : "groovy",
+            "params": {
+              "term": "advertise",
+              "field": "text"
+            }
+          }
+        }
+      ],
+      "boost_mode": "replace"
+    }
+  },
+  "size": 10000,
+  "fields": ["stream_id"]
+}
+
+
+
+PUT /ap_89/document/AP89-TEMP1
+{
+  "docno":"AP89-TEMP1",
+  "text":"I am drunk without Alchol"
+}
+
+
+GET /ap_89/_search
+{
+  "query": {
+    "match_all": {}
+  }
+}
+
+
+GET /ap_89/document/_search
+{
+  "query": {
+    "match": {
+      "text" : "allegation"
+      }
+    }
+  }
+
+GET /ap_89/document/_search
+{
+  "query": {
+    "match": {
+      "text" : "sign"
+      }
+    }
+  }
+
+POST /ap_89/_search
+{
+  "aggs" : {
+    "unique_terms" : {
+      "cardinality" : {
+        "field" : "text"
+        }
+      }
+    }
+}
+
+GET /ap_89/document/AP890222-0077
+  
+POST /ap_89/document/_search
+{
+  "query": {
+    "match_all": {}
+  },
+  "aggs": {
+    "avg_docs": {
+      "stats": {
+        "script": "doc['text'].values.size()"
+      }
+    }
+  }
+}
+
+GET  /ap_89/document/_search
+
+GET  /ap_89/document/_search
+{
+  "query": {
+    "match": {
+      "text": "nuclear"
+    }
+  },
+  "explain": true
+}
+
+#######################################################
+
+PUT /doctest/document/2
+{
+  "documentId":"456",
+  "text":"I am drunk without Alchol"
+  
+}
+
+GET /doctest/_search
+{
+  "query": {
+    "match_all": {}
+  }
+}
+
+
+
+
+GET /docset/document/_search
+{
+  "query": {
+    "match": {
+      "text" : "products"
+      }
+    }
+  }
+
+GET /docset/document/_search
+{
+  "query": {
+    "match": {
+      "text" : "sign"
+      }
+    }
+  }
+
+POST /docset/_search
+{
+  "aggs" : {
+    "unique_terms" : {
+      "cardinality" : {
+        "field" : "text"
+        }
+      }
+    }
+}
+  
+GET /docset/_search
+{
+  "aggs" : {
+    "unique_terms" : {
+      "cardinality" : {
+        "script" : "doc['text'].values.size()"
+        }
+      }
+    }
+}
+
+PUT /doctest/
+{
+  "settings": {
+    "index": {
+      "store": {
+        "type": "default"
+      },
+      "number_of_shards": 1,
+      "number_of_replicas": 1
+    },
+    "analysis": {
+      "analyzer": {
+        "my_english": { 
+          "type": "english",
+          "stopwords_path": "../stoplist.txt" 
+        }
+      }
+    }
+  }
+}
+
+
+PUT /doctest/document/_mapping
+{
+  "document": {
+    "properties": {
+      "docno": {
+        "type": "string",
+        "store": true,
+        "index": "not_analyzed"
+      },
+      "text": {
+        "type": "string",
+        "store": true,
+        "index": "analyzed",
+        "term_vector": "with_positions_offsets_payloads",
+        "analyzer": "my_english"
+      }
+    }
+  }
+}
