@@ -1,0 +1,6 @@
+Install scikit i.e. sklearn package for python
+Convert the Top set of documents for each query into document-term matrix. You can use CountVectorizer from sklearn.feature_extraction.text package
+It is good idead to restrict stop words, words with very high document frequency and also words not occouring more than say 1 or 2 time. These all can be passed in CountVectorizer
+Train by fitting the sparse matrix obtained from above to LatentDirichletAllocation from sklearn.decomposition. This will fetch N topics with M features as word. Sort features probabilirty to get top K words.
+Transform the model to get distrubution of topic over documents. Sort them again and list top 3 topics per document.
+Also fetch top 3 topics for each query by performing by rank measure of topics or by checking for feature occurences in each document and sorting top 3 topic for max score
